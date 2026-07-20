@@ -1,0 +1,18 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+new file mode 100644
+--- /dev/null
++++ b/CMakeLists.txt
+@@ -0,0 +1,13 @@
++file(GLOB_RECURSE SRCS
++    "src/*.c"
++    "src/*.cpp"
++)
++
++idf_component_register(
++    SRCS ${SRCS}
++    INCLUDE_DIRS
++        "src"
++        "src/utilities/BMI270-Sensor-API"
++        "src/utilities/BMM150-Sensor-API"
++    REQUIRES espressif__arduino-esp32
++)

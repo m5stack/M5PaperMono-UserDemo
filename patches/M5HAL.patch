@@ -1,0 +1,13 @@
+diff --git a/idf_component.yml b/idf_component.yml
+--- a/idf_component.yml
++++ b/idf_component.yml
+@@ -6,9 +6,6 @@ version: "0.1.2"
+ 
+ dependencies:
+   idf: ">=5.0"
+-  m5stack/M5Utility:
+-    git: https://github.com/m5stack/M5Utility.git
+-    version: main
+ 
+ targets:
+   - esp32

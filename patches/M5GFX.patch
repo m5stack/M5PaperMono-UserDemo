@@ -1,0 +1,12 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -32,7 +32,7 @@ else()
+ endif()
+ 
+ ### If you use arduino-esp32 components, please activate next comment line.
+-# list(APPEND COMPONENT_REQUIRES arduino-esp32)
++list(APPEND COMPONENT_REQUIRES espressif__arduino-esp32)
+ 
+ 
+ message(STATUS "M5GFX use components = ${COMPONENT_REQUIRES}")

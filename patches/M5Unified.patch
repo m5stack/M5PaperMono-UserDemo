@@ -1,0 +1,22 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,7 +28,7 @@ else()
+ endif()
+ 
+ ### If you use arduino-esp32 components, please activate next comment line.
+-# list(APPEND COMPONENT_REQUIRES arduino-esp32)
++list(APPEND COMPONENT_REQUIRES espressif__arduino-esp32)
+ 
+ 
+ message(STATUS "M5Unified use component = ${COMPONENT_REQUIRES}" )
+diff --git a/idf_component.yml b/idf_component.yml
+--- a/idf_component.yml
++++ b/idf_component.yml
+@@ -3,6 +3,3 @@ issues: https://github.com/m5stack/M5Unified/issues
+ repository: https://github.com/m5stack/M5Unified.git
+ url: https://github.com/m5stack/M5Unified.git
+ version: 0.2.19
+-dependencies:
+-  m5stack/m5gfx:
+-    version: ">=0.2.25"

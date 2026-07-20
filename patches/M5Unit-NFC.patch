@@ -1,0 +1,24 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -8,6 +8,6 @@ file(GLOB_RECURSE SRCS "src/*.cpp")
+ idf_component_register(
+     SRCS ${SRCS}
+     INCLUDE_DIRS "src"
+-    REQUIRES M5UnitUnified M5Utility
++    REQUIRES M5UnitUnified M5Utility M5Unified espressif__arduino-esp32
+     PRIV_REQUIRES driver mbedtls
+ )
+diff --git a/idf_component.yml b/idf_component.yml
+--- a/idf_component.yml
++++ b/idf_component.yml
+@@ -6,9 +6,6 @@ version: "0.1.0"
+ 
+ dependencies:
+   idf: ">=5.0"
+-  m5stack/M5UnitUnified:
+-    git: https://github.com/m5stack/M5UnitUnified.git
+-    version: main
+ 
+ targets:
+   - esp32

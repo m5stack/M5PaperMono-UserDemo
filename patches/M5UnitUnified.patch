@@ -1,0 +1,52 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,7 +14,7 @@ file(GLOB_RECURSE SRCS "src/*.cpp")
+ list(FILTER SRCS EXCLUDE REGEX "/googletest/")
+ 
+ set(public_requires driver M5HAL)
+-set(private_requires esp_adc esp_timer M5Utility)
++set(private_requires esp_adc esp_timer M5Utility M5Unified espressif__arduino-esp32)
+ 
+ # Keep IDF 5.x on the driver meta-component. IDF v6 no longer exposes all split
+ # driver include paths transitively, so add only the v6-specific component deps.
+diff --git a/idf_component.yml b/idf_component.yml
+--- a/idf_component.yml
++++ b/idf_component.yml
+@@ -6,12 +6,6 @@ version: "0.5.5"
+ 
+ dependencies:
+   idf: ">=5.0"
+-  m5stack/M5HAL:
+-    git: https://github.com/m5stack/M5HAL.git
+-    version: main
+-  m5stack/M5Utility:
+-    git: https://github.com/m5stack/M5Utility.git
+-    version: main
+ 
+ targets:
+   - esp32
+diff --git a/src/M5UnitUnified.cpp b/src/M5UnitUnified.cpp
+--- a/src/M5UnitUnified.cpp
++++ b/src/M5UnitUnified.cpp
+@@ -230,6 +230,10 @@ bool UnitUnified::add(Component& u, spi_device_handle_t handle, const gpio_num_t
+ // Add children if exists (iterative to avoid stack overflow)
+ bool UnitUnified::add_children(Component& u)
+ {
++    if (!u.hasChildren()) {
++        return true;
++    }
++
+     std::vector<Component*> stack;
+     stack.reserve(8);
+     stack.push_back(&u);
+@@ -237,6 +241,9 @@ bool UnitUnified::add_children(Component& u)
+     while (!stack.empty()) {
+         Component* parent = stack.back();
+         stack.pop_back();
++        if (!parent || !parent->hasChildren()) {
++            continue;
++        }
+ 
+         for (auto it = parent->childBegin(); it != parent->childEnd(); ++it) {
+             auto ch = it->channel();

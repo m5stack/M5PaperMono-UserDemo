@@ -1,0 +1,83 @@
+[
+  {
+    "name": "Arduino_BMI270_BMM150",
+    "url": "https://github.com/arduino-libraries/Arduino_BMI270_BMM150.git",
+    "path": "components/Arduino_BMI270_BMM150",
+    "ref": "1.2.3",
+    "commit": "a599119044554015e06735f9d7187fc56295b9b6",
+    "patches": ["patches/Arduino_BMI270_BMM150.patch"]
+  },
+  {
+    "name": "LGFX_Fonts",
+    "url": "https://github.com/tobozo/LGFX_Fonts.git",
+    "path": "components/LGFX_Fonts",
+    "ref": "1.1.2",
+    "commit": "253cf549fe0b1aa932be68fe06a13c3077918d61",
+    "patches": ["patches/LGFX_Fonts.patch"]
+  },
+  {
+    "name": "M5GFX",
+    "url": "https://github.com/m5stack/M5GFX.git",
+    "path": "components/M5GFX",
+    "ref": "develop",
+    "commit": "e5b897bbfc3b951f35d74ea70ccccad3fcd3182b",
+    "patches": ["patches/M5GFX.patch"]
+  },
+  {
+    "name": "M5HAL",
+    "url": "https://github.com/m5stack/M5HAL.git",
+    "path": "components/M5HAL",
+    "ref": "0.1.2",
+    "commit": "0f06f9d3134706ce030fd5515601cce65a267233",
+    "patches": ["patches/M5HAL.patch"]
+  },
+  {
+    "name": "M5Unified",
+    "url": "https://github.com/m5stack/M5Unified.git",
+    "path": "components/M5Unified",
+    "ref": "develop",
+    "commit": "b6d4c6775edc273c6ade86433bdf64c2f9027468",
+    "patches": ["patches/M5Unified.patch"]
+  },
+  {
+    "name": "M5Unit-NFC",
+    "url": "https://github.com/m5stack/M5Unit-NFC.git",
+    "path": "components/M5Unit-NFC",
+    "ref": "0.1.0",
+    "commit": "93745b547364f310cd64b5155a870103a7800a5d",
+    "patches": ["patches/M5Unit-NFC.patch"]
+  },
+  {
+    "name": "M5UnitUnified",
+    "url": "https://github.com/m5stack/M5UnitUnified.git",
+    "path": "components/M5UnitUnified",
+    "ref": "0.5.5",
+    "commit": "bf711f370047cf16355b00005450ef615fab36e2",
+    "patches": ["patches/M5UnitUnified.patch"]
+  },
+  {
+    "name": "M5Utility",
+    "url": "https://github.com/m5stack/M5Utility.git",
+    "path": "components/M5Utility",
+    "ref": "0.1.0",
+    "commit": "5b5ed9626bc4c1cf81ec6039a34e33c901b5b68f",
+    "patches": []
+  },
+  {
+    "name": "mooncake",
+    "url": "https://github.com/Forairaaaaa/mooncake.git",
+    "path": "components/mooncake",
+    "ref": "v2.3.3",
+    "commit": "572a7e488641f1c3f22e85d65c27f095ecf27d12",
+    "patches": []
+  },
+  {
+    "name": "RadioLib",
+    "url": "https://github.com/jgromes/RadioLib.git",
+    "path": "components/RadioLib",
+    "ref": "7.2.1",
+    "commit": "b91c6af112e423dcb14529ade5827802a14e1015",
+    "patches": ["patches/RadioLib.patch"],
+    "remove": ["idf_component.yml"]
+  }
+]

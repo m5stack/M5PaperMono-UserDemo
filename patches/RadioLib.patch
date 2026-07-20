@@ -1,0 +1,38 @@
+diff --git a/src/hal/RPiPico/PicoHal.h b/src/hal/RPiPico/PicoHal.h
+--- a/src/hal/RPiPico/PicoHal.h
++++ b/src/hal/RPiPico/PicoHal.h
+@@ -69,7 +69,7 @@ public:
+       return;
+     }
+ 
+-    gpio_set_irq_enabled_with_callback(interruptNum, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, (gpio_irq_callback_t)interruptCb);
++    gpio_set_irq_enabled_with_callback(interruptNum, mode, true, (gpio_irq_callback_t)interruptCb);
+   }
+ 
+   void detachInterrupt(uint32_t interruptNum) override {
+diff --git a/src/modules/SX126x/SX126x.cpp b/src/modules/SX126x/SX126x.cpp
+--- a/src/modules/SX126x/SX126x.cpp
++++ b/src/modules/SX126x/SX126x.cpp
+@@ -616,6 +616,7 @@ int16_t SX126x::startReceiveCommon(uint32_t timeout, RadioLibIrqFlags_t irqFlags
+ 
+   // clear interrupt flags
+   state = clearIrqStatus();
++  RADIOLIB_ASSERT(state);
+ 
+   // restore original packet length
+   uint8_t modem = getPacketType();
+diff --git a/src/protocols/PhysicalLayer/PhysicalLayer.h b/src/protocols/PhysicalLayer/PhysicalLayer.h
+--- a/src/protocols/PhysicalLayer/PhysicalLayer.h
++++ b/src/protocols/PhysicalLayer/PhysicalLayer.h
+@@ -229,6 +229,11 @@ class PhysicalLayer {
+     */
+     PhysicalLayer();
+ 
++    /*!
++      \brief Default destructor.
++    */
++    virtual ~PhysicalLayer() = default;
++
+     // basic methods
+ 
+     #if defined(RADIOLIB_BUILD_ARDUINO)
