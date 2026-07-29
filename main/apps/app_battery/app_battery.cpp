@@ -26,6 +26,14 @@ static constexpr int BATTERY_X              = 86;
 static constexpr int BATTERY_Y              = 13;
 static constexpr int BATTERY_W              = 129 - 86;
 static constexpr int BATTERY_H              = 30 - 13;
+static constexpr int BATTERY_OUTLINE_MARGIN = 4;
+static constexpr int BATTERY_BLOCK_RADIUS   = 3;
+static constexpr int BATTERY_OUTLINE_RADIUS = BATTERY_BLOCK_RADIUS + BATTERY_OUTLINE_MARGIN;
+static constexpr int BATTERY_OUTLINE_WIDTH  = 2;
+static constexpr int BATTERY_OUTLINE_X      = BATTERY_X - BATTERY_OUTLINE_MARGIN;
+static constexpr int BATTERY_OUTLINE_Y      = BATTERY_Y - BATTERY_OUTLINE_MARGIN;
+static constexpr int BATTERY_OUTLINE_W      = BATTERY_W + BATTERY_OUTLINE_MARGIN * 2;
+static constexpr int BATTERY_OUTLINE_H      = BATTERY_H + BATTERY_OUTLINE_MARGIN * 2;
 static constexpr int BATTERY_TOUCH_MARGIN_X = 8;
 static constexpr int BATTERY_TOUCH_MARGIN_Y = 8;
 
@@ -183,21 +191,20 @@ static void drawCenteredBatteryText(const char* text, int x_offset = 0)
 
 static void fillLeftRoundRect(int x, int y, int w, int h, int radius)
 {
-    GetHAL().display.fillRoundRect(x, y, w, h, radius, TFT_BLACK);
+    GetHAL().display.fillSmoothRoundRect(x, y, w, h, radius, TFT_BLACK);
     GetHAL().display.fillRect(x + radius, y, w - radius, h, TFT_BLACK);
 }
 
 static void fillRightRoundRect(int x, int y, int w, int h, int radius)
 {
-    GetHAL().display.fillRoundRect(x, y, w, h, radius, TFT_BLACK);
+    GetHAL().display.fillSmoothRoundRect(x, y, w, h, radius, TFT_BLACK);
     GetHAL().display.fillRect(x, y, w - radius, h, TFT_BLACK);
 }
 
 static void drawBatteryBlocks(int percent)
 {
-    static constexpr int BLOCK_COUNT  = 5;
-    static constexpr int BLOCK_GAP    = 1;
-    static constexpr int ROUND_RADIUS = 2;
+    static constexpr int BLOCK_COUNT = 5;
+    static constexpr int BLOCK_GAP   = 1;
 
     const int filled_blocks      = percent <= 0 ? 0 : std::clamp((percent * BLOCK_COUNT + 99) / 100, 1, BLOCK_COUNT);
     const int first_filled_index = BLOCK_COUNT - filled_blocks;
@@ -211,9 +218,9 @@ static void drawBatteryBlocks(int percent)
 
         if (i >= first_filled_index) {
             if (i == 0) {
-                fillLeftRoundRect(x, BATTERY_Y, block_w, BATTERY_H, ROUND_RADIUS);
+                fillLeftRoundRect(x, BATTERY_Y, block_w, BATTERY_H, BATTERY_BLOCK_RADIUS);
             } else if (i == BLOCK_COUNT - 1) {
-                fillRightRoundRect(x, BATTERY_Y, block_w, BATTERY_H, ROUND_RADIUS);
+                fillRightRoundRect(x, BATTERY_Y, block_w, BATTERY_H, BATTERY_BLOCK_RADIUS);
             } else {
                 GetHAL().display.fillRect(x, BATTERY_Y, block_w, BATTERY_H, TFT_BLACK);
             }
@@ -222,6 +229,16 @@ static void drawBatteryBlocks(int percent)
             x += block_w + BLOCK_GAP;
         }
     }
+}
+
+static void drawBatteryOutline()
+{
+    GetHAL().display.fillSmoothRoundRect(BATTERY_OUTLINE_X, BATTERY_OUTLINE_Y, BATTERY_OUTLINE_W, BATTERY_OUTLINE_H,
+                                         BATTERY_OUTLINE_RADIUS, TFT_BLACK);
+    GetHAL().display.fillSmoothRoundRect(
+        BATTERY_OUTLINE_X + BATTERY_OUTLINE_WIDTH, BATTERY_OUTLINE_Y + BATTERY_OUTLINE_WIDTH,
+        BATTERY_OUTLINE_W - BATTERY_OUTLINE_WIDTH * 2, BATTERY_OUTLINE_H - BATTERY_OUTLINE_WIDTH * 2,
+        BATTERY_OUTLINE_RADIUS - BATTERY_OUTLINE_WIDTH, TFT_WHITE);
 }
 
 void AppBattery::onCreate()
@@ -258,7 +275,7 @@ void AppBattery::onRunning()
         return;
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested() || now_ms - _last_update_ms >= APP_BATTERY_REFRESH_MS) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested() || now_ms - _last_update_ms >= APP_BATTERY_REFRESH_MS) {
         drawBattery(true);
     }
 }
@@ -294,7 +311,8 @@ void AppBattery::drawBattery(bool sample_voltage)
     const int percent             = getBatteryPercent(static_cast<std::int16_t>(battery_mv));
 
     GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
-    GetHAL().display.fillRect(BATTERY_X, BATTERY_Y, BATTERY_W, BATTERY_H, TFT_WHITE);
+    GetHAL().display.fillRect(BATTERY_OUTLINE_X, BATTERY_OUTLINE_Y, BATTERY_OUTLINE_W, BATTERY_OUTLINE_H, TFT_WHITE);
+    drawBatteryOutline();
     GetHAL().display.setTextColor(TFT_BLACK, TFT_WHITE);
     if (_display_mode == BATTERY_MODE_PERCENT) {
         char percent_text[8] = {};
@@ -311,9 +329,8 @@ void AppBattery::drawBattery(bool sample_voltage)
     } else {
         drawBatteryBlocks(percent);
     }
-
     if (!GetHAL().isRefreshRequested()) {
-        GetHAL().flushDisplay(BATTERY_X, BATTERY_Y, BATTERY_W, BATTERY_H);
+        GetHAL().flushDisplay(BATTERY_OUTLINE_X, BATTERY_OUTLINE_Y, BATTERY_OUTLINE_W, BATTERY_OUTLINE_H);
         GetHAL().display.waitDisplay();
     }
 

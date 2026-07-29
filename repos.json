@@ -20,7 +20,7 @@
     "url": "https://github.com/m5stack/M5GFX.git",
     "path": "components/M5GFX",
     "ref": "develop",
-    "commit": "e5b897bbfc3b951f35d74ea70ccccad3fcd3182b",
+    "commit": "02107b828acb3eb782fccd747863638d64c876d7",
     "patches": ["patches/M5GFX.patch"]
   },
   {
@@ -36,7 +36,7 @@
     "url": "https://github.com/m5stack/M5Unified.git",
     "path": "components/M5Unified",
     "ref": "develop",
-    "commit": "b6d4c6775edc273c6ade86433bdf64c2f9027468",
+    "commit": "2fe93c0c64f12f916e73a0605c86bf1241c06a6b",
     "patches": ["patches/M5Unified.patch"]
   },
   {

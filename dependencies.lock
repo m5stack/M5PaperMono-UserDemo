@@ -251,7 +251,7 @@ dependencies:
       type: service
     version: 0.0.11
   espressif/esp-sr:
-    component_hash: aa58d6a13a49600314a50a27240ccbd17e407f608216a3086d4868e0da2e8053
+    component_hash: 809d0041cdddd98a278f0d5afef7bb60a451290577b98cf718dfffc91bdcbd9b
     dependencies:
     - name: espressif/cjson
       registry_url: https://components.espressif.com
@@ -260,7 +260,7 @@ dependencies:
     - name: espressif/dl_fft
       registry_url: https://components.espressif.com
       require: private
-      version: '>=0.2.0'
+      version: '>=0.6.0'
     - name: espressif/esp-dsp
       registry_url: https://components.espressif.com
       require: private
@@ -271,7 +271,7 @@ dependencies:
     source:
       registry_url: https://components.espressif.com
       type: service
-    version: 2.4.6
+    version: 2.4.7
   espressif/esp-zboss-lib:
     component_hash: 321883d142421f65009972408287441794250057668a11abbdfd8bec77c3309a
     dependencies:
@@ -529,7 +529,7 @@ dependencies:
       type: idf
     version: 5.5.1
   joltwallet/littlefs:
-    component_hash: fab83a8a57de01b05441557d78e9d10c755413a1836af4b2762b539add0c14b1
+    component_hash: 3af20a3d75c49db9dc2286fd50862c34055c9f578419ad1f2bf7ed3ed01391fe
     dependencies:
     - name: idf
       require: private
@@ -537,7 +537,7 @@ dependencies:
     source:
       registry_url: https://components.espressif.com
       type: service
-    version: 1.22.2
+    version: 1.22.3
   m5stack/m5ioe1:
     component_hash: 1e16ad396711cd21b588ba3290aa20f9605f950702e15b8e44e38a56ead0a38c
     dependencies:
@@ -571,6 +571,6 @@ direct_dependencies:
 - idf
 - m5stack/m5ioe1
 - m5stack/m5pm1
-manifest_hash: 5bc4ef0a9a6a2eaf0de9b066d098c32c011fcfae184db5d8bc4d1045ad50a707
+manifest_hash: 580d9d9a16f6786291242118794d0081e0f9d0a1b6f6f53966c6a7399dd8c770
 target: esp32s3
 version: 2.0.0

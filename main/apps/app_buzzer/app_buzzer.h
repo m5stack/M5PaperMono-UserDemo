@@ -20,5 +20,5 @@ private:
     bool _has_drawn              = false;
     bool _pending_mute           = false;
 
-    void drawBuzzer();
+    void drawBuzzer(bool force_refresh = false);
 };

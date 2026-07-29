@@ -178,7 +178,7 @@ void AppWifiScan::onRunning()
         }
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested()) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
         drawWifi();
     }
 }
@@ -262,7 +262,6 @@ void AppWifiScan::drawStatusText(const char* text)
     GetHAL().display.drawString(text, info.x + info.w / 2, info.y + info.h / 2);
 
     if (!GetHAL().isRefreshRequested()) {
-        GetHAL().prepareDisplayRefreshObservers();
         GetHAL().flushDisplay(info.x, info.y, info.w, info.h);
         GetHAL().display.waitDisplay();
     }
@@ -315,7 +314,6 @@ void AppWifiScan::drawWifi()
     }
 
     if (!GetHAL().isRefreshRequested()) {
-        GetHAL().prepareDisplayRefreshObservers();
         GetHAL().flushDisplay(info.x, info.y, info.w, info.h);
         GetHAL().display.waitDisplay();
     }

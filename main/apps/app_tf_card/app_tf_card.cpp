@@ -285,7 +285,7 @@ void AppTfCard::onRunning()
             if (!_image_view_open) {
                 return;
             }
-            if (!_image_view_drawn || GetHAL().isRefreshRequested()) {
+            if (!_image_view_drawn || GetHAL().isFullRedrawRequested()) {
                 drawImageViewer(false);
             }
             return;
@@ -295,7 +295,7 @@ void AppTfCard::onRunning()
         if (!_browser_open) {
             return;
         }
-        if (!_browser_drawn || GetHAL().isRefreshRequested()) {
+        if (!_browser_drawn || GetHAL().isFullRedrawRequested()) {
             drawBrowser();
         }
         return;
@@ -327,7 +327,7 @@ void AppTfCard::onRunning()
         return;
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested()) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
         updateCardState(true);
     } else if (now_ms - _last_card_poll_ms >= TF_CARD_POLL_MS) {
         updateCardState(false);
@@ -404,11 +404,12 @@ void AppTfCard::openBrowser()
         return;
     }
 
+    GetHAL().captureDisplaySnapshot();
     _browser_open       = true;
     _browser_drawn      = false;
     _last_card_check_ms = 0;
     GetHAL().setUiModalActive(true);
-    drawBrowser();
+    drawBrowser(true);
 }
 
 void AppTfCard::closeBrowser()
@@ -423,8 +424,11 @@ void AppTfCard::closeBrowser()
     _has_drawn          = false;
     _last_card_check_ms = 0;
     GetHAL().setUiModalActive(false);
-    GetHAL().drawBackground(m5gfx::epd_mode_t::epd_fastest, false);
-    GetHAL().requestRefreshNextFrame();
+    if (!GetHAL().restoreDisplaySnapshot()) {
+        GetHAL().drawBackground(m5gfx::epd_mode_t::epd_quality, false);
+    }
+    GetHAL().clearDisplaySnapshot();
+    GetHAL().requestRefreshNextFrame(m5gfx::epd_mode_t::epd_fast);
 }
 
 void AppTfCard::openImageViewer(const std::string& path)
@@ -439,7 +443,7 @@ void AppTfCard::openImageViewer(const std::string& path)
     const auto saved_mode = display.getEpdMode();
     display.setEpdMode(m5gfx::epd_mode_t::epd_quality);
     display.fillScreen(TFT_WHITE);
-    display.display();
+    GetHAL().flushDisplay();
     display.waitDisplay();
     display.setEpdMode(saved_mode);
 
@@ -550,7 +554,7 @@ bool AppTfCard::loadDirectory(const std::string& path)
     return true;
 }
 
-void AppTfCard::drawBrowser()
+void AppTfCard::drawBrowser(bool fast_refresh)
 {
     auto& display          = GetHAL().display;
     const int screen_w     = display.width();
@@ -563,7 +567,7 @@ void AppTfCard::drawBrowser()
     const int max_scroll   = std::max(0, static_cast<int>(_entries.size()) - visible_rows);
     _scroll_index          = static_cast<std::int16_t>(std::clamp(static_cast<int>(_scroll_index), 0, max_scroll));
 
-    display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
+    display.setEpdMode(fast_refresh ? m5gfx::epd_mode_t::epd_fast : m5gfx::epd_mode_t::epd_fastest);
     display.fillScreen(TFT_WHITE);
     display.setTextColor(TFT_BLACK, TFT_WHITE);
 
@@ -636,6 +640,7 @@ void AppTfCard::drawBrowser()
 
     GetHAL().flushDisplay();
     display.waitDisplay();
+    display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
     _browser_drawn = true;
 }
 
@@ -849,7 +854,7 @@ void AppTfCard::handleImageViewerTouch()
         GetHAL().playBuzzerPattern(TF_OVERLAY_TONES, 1);
         _image_overlay_visible = !_image_overlay_visible;
         _image_view_drawn      = false;
-        drawImageViewer(!_image_overlay_visible);
+        refreshImageOverlay();
     }
 }
 
@@ -874,6 +879,14 @@ void AppTfCard::captureImageCleanCache()
     const std::size_t buffer_size = static_cast<std::size_t>(screen_w) * static_cast<std::size_t>(screen_h);
     _image_clean_cache.resize(buffer_size);
     display.readRect(0, 0, screen_w, screen_h, _image_clean_cache.data());
+
+    // Stable representatives reproduce the same SSD1677 2-bit levels when pushed through its Bayer conversion.
+    static constexpr std::uint8_t CACHE_GRAY_LEVELS[] = {0, 96, 160, 255};
+    for (auto& pixel : _image_clean_cache) {
+        const std::size_t level = std::min<std::size_t>((static_cast<std::size_t>(pixel.raw) + 42) / 85, 3);
+        pixel.raw               = CACHE_GRAY_LEVELS[level];
+    }
+
     _image_clean_cache_w     = static_cast<std::int16_t>(screen_w);
     _image_clean_cache_h     = static_cast<std::int16_t>(screen_h);
     _image_clean_cache_valid = true;
@@ -897,13 +910,14 @@ bool AppTfCard::restoreImageCleanCache()
 
 void AppTfCard::drawImageOverlay()
 {
+    drawImageOverlayHeader();
+    drawImageOverlayFooter();
+}
+
+void AppTfCard::drawImageOverlayHeader()
+{
     auto& display      = GetHAL().display;
     const int screen_w = display.width();
-    const int screen_h = display.height();
-    const int button_y = screen_h - BROWSER_BUTTON_H - 10;
-    const int prev_x   = BROWSER_MARGIN;
-    const int close_x  = (screen_w - BROWSER_BUTTON_W) / 2;
-    const int next_x   = screen_w - BROWSER_MARGIN - BROWSER_BUTTON_W;
 
     display.fillRect(0, 0, screen_w, IMAGE_OVERLAY_HEADER_H, TFT_BLACK);
     display.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -911,6 +925,17 @@ void AppTfCard::drawImageOverlay()
     display.setFont(&fonts::efontCN_24_b);
     display.drawString(fitText(fileNameFromPath(_image_path), screen_w - BROWSER_MARGIN * 2).c_str(), BROWSER_MARGIN,
                        IMAGE_OVERLAY_HEADER_H / 2);
+}
+
+void AppTfCard::drawImageOverlayFooter()
+{
+    auto& display      = GetHAL().display;
+    const int screen_w = display.width();
+    const int screen_h = display.height();
+    const int button_y = screen_h - BROWSER_BUTTON_H - 10;
+    const int prev_x   = BROWSER_MARGIN;
+    const int close_x  = (screen_w - BROWSER_BUTTON_W) / 2;
+    const int next_x   = screen_w - BROWSER_MARGIN - BROWSER_BUTTON_W;
 
     display.fillRect(0, screen_h - IMAGE_OVERLAY_FOOTER_H, screen_w, IMAGE_OVERLAY_FOOTER_H, TFT_WHITE);
     display.setTextColor(TFT_BLACK, TFT_WHITE);
@@ -922,6 +947,36 @@ void AppTfCard::drawImageOverlay()
     display.drawString("CLOSE", close_x + BROWSER_BUTTON_W / 2, button_y + BROWSER_BUTTON_H / 2);
     display.drawRoundRect(next_x, button_y, BROWSER_BUTTON_W, BROWSER_BUTTON_H, 5, TFT_BLACK);
     display.drawString("NEXT", next_x + BROWSER_BUTTON_W / 2, button_y + BROWSER_BUTTON_H / 2);
+}
+
+void AppTfCard::refreshImageOverlay()
+{
+    auto& display      = GetHAL().display;
+    const int screen_w = display.width();
+    const int screen_h = display.height();
+    const int footer_y = screen_h - IMAGE_OVERLAY_FOOTER_H;
+
+    if (_image_overlay_visible) {
+        display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
+
+        drawImageOverlayHeader();
+        GetHAL().flushDisplay(0, 0, screen_w, IMAGE_OVERLAY_HEADER_H);
+        display.waitDisplay();
+
+        drawImageOverlayFooter();
+        GetHAL().flushDisplay(0, footer_y, screen_w, IMAGE_OVERLAY_FOOTER_H);
+        display.waitDisplay();
+    } else if (restoreImageCleanCache()) {
+        display.setEpdMode(m5gfx::epd_mode_t::epd_quality);
+        GetHAL().flushDisplay();
+        display.waitDisplay();
+        display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
+    } else {
+        drawImageViewer(true);
+        return;
+    }
+
+    _image_view_drawn = true;
 }
 
 bool AppTfCard::switchImage(int direction)

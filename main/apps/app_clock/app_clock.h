@@ -25,7 +25,6 @@ private:
 
     ScreenKeyboard _keyboard;
     std::vector<WifiChoice> _ntp_networks;
-    std::vector<std::uint8_t> _ntp_background;
     std::string _ntp_ssid;
     std::string _ntp_password;
     std::string _ntp_status;
@@ -41,8 +40,6 @@ private:
     std::int16_t _ntp_last_touch_y        = 0;
     std::int16_t _ntp_touch_start_x       = 0;
     std::int16_t _ntp_touch_start_y       = 0;
-    std::int16_t _ntp_background_w        = 0;
-    std::int16_t _ntp_background_h        = 0;
     std::uint8_t _ntp_edit_field          = 0;
     std::uint8_t _timezone_index          = 0;
     bool _ntp_dialog_open                 = false;
@@ -54,14 +51,13 @@ private:
     bool _ntp_touching                    = false;
     bool _ntp_list_touching               = false;
     bool _ntp_list_dragged                = false;
-    bool _ntp_background_valid            = false;
     bool _has_drawn                       = false;
 
     void drawTime();
     void switchTimezone();
     void openNtpDialog();
     void closeNtpDialog();
-    void drawNtpDialog();
+    void drawNtpDialog(bool full_refresh = false);
     void drawNtpInputFields();
     void handleNtpDialog();
     void startNtpScan();
@@ -73,6 +69,4 @@ private:
     void loadNtpSettings();
     void saveNtpSettings();
     void scheduleNextAutoNtp(std::uint32_t delay_ms);
-    void captureNtpBackground();
-    void restoreNtpBackground();
 };

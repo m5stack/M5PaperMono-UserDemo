@@ -97,29 +97,29 @@ void AppBuzzer::onRunning()
             _pending_mute  = true;
             _mute_apply_ms = now_ms + BUZZER_MUTE_SOUND_MS;
         }
-        GetHAL().requestRefresh();
-        drawBuzzer();
+        drawBuzzer(true);
         return;
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested()) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
         drawBuzzer();
     }
 }
 
-void AppBuzzer::drawBuzzer()
+void AppBuzzer::drawBuzzer(bool force_refresh)
 {
     const bool muted          = GetHAL().isBuzzerMuted() || _pending_mute;
     const std::uint8_t* start = muted ? img_MUTE_ON_start : img_MUTE_OFF_start;
     const std::uint8_t* end   = muted ? img_MUTE_ON_end : img_MUTE_OFF_end;
 
-    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
+    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fast);
     GetHAL().display.drawPng(start, end - start, BUZZER_X, BUZZER_Y);
 
-    if (!GetHAL().isRefreshRequested()) {
+    if (force_refresh || !GetHAL().isRefreshRequested()) {
         GetHAL().flushDisplay(BUZZER_X, BUZZER_Y, BUZZER_W, BUZZER_H);
         GetHAL().display.waitDisplay();
     }
+    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
 
     _has_drawn = true;
 }

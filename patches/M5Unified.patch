@@ -19,4 +19,4 @@ diff --git a/idf_component.yml b/idf_component.yml
  version: 0.2.19
 -dependencies:
 -  m5stack/m5gfx:
--    version: ">=0.2.25"
+-    version: ">=0.2.26"

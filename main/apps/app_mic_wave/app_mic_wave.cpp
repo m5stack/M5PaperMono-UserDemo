@@ -77,11 +77,8 @@ void AppMicWave::onRunning()
         _last_touch_y       = touch_y;
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested() || touch_changed ||
+    if (!_has_drawn || GetHAL().isFullRedrawRequested() || touch_changed ||
         now_ms - _last_update_ms >= APP_MIC_REFRESH_MS) {
-        if (touch_changed && !GetHAL().isRefreshRequested()) {
-            GetHAL().prepareDisplayRefreshObservers(this);
-        }
         drawMicWave();
         if (touch_changed) {
             _last_touch_refresh_ms = now_ms;

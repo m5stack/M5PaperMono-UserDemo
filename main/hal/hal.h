@@ -15,6 +15,7 @@
 #include <freertos/task.h>
 #include <sdmmc_cmd.h>
 #include <string>
+#include <vector>
 
 enum class TfCardStatus : std::uint8_t {
     NoCard,
@@ -120,7 +121,10 @@ public:
 
     /* --------------------------------- Display -------------------------------- */
     bool drawBackground(m5gfx::epd_mode_t mode = m5gfx::epd_mode_t::epd_quality, bool flush = true);
-    void flushDisplayQualityOnce();
+    bool captureDisplaySnapshot();
+    bool restoreDisplaySnapshot();
+    void clearDisplaySnapshot();
+    void flushDisplayFastOnce();
     void flushDisplay();
     void flushDisplay(int32_t x, int32_t y, int32_t w, int32_t h);
 
@@ -131,13 +135,16 @@ public:
 
     /* ----------------------------------- UI ----------------------------------- */
     void requestRefresh();
-    void requestRefreshNextFrame();
+    void requestFullRedraw(m5gfx::epd_mode_t mode = m5gfx::epd_mode_t::epd_quality);
+    void requestRefreshNextFrame(m5gfx::epd_mode_t mode = m5gfx::epd_mode_t::epd_quality);
     bool registerDisplayRefreshObserver(DisplayRefreshObserver* observer);
     void prepareDisplayRefreshObservers(DisplayRefreshObserver* exclude = nullptr);
     bool isPreparingDisplayRefreshObservers() const;
-    void releaseModalNextFrame();
+    void releaseModalNextFrame(m5gfx::epd_mode_t mode = m5gfx::epd_mode_t::epd_quality);
     void beginFrame();
     bool isRefreshRequested() const;
+    bool isFullRedrawRequested() const;
+    m5gfx::epd_mode_t fullRedrawMode() const;
     void clearRefreshRequest();
     void setUiModalActive(bool active);
     bool isUiModalActive() const;
@@ -166,6 +173,9 @@ private:
     void detectBoardVariant();
     bool probeNfcIdentity(std::uint8_t& identity, std::uint8_t& type, std::uint8_t& rev);
 
+    /* ----------------------------------- IMU ---------------------------------- */
+    bool initImu();
+
     /* -------------------------------- Microphone ------------------------------- */
     bool setPdmPower(bool enable);
     int readPdmEnableLevel();
@@ -183,17 +193,26 @@ private:
     bool readTfCardDetect(bool& inserted);
     void updateTfCapacity();
 
-    bool _refresh_request            = false;
-    bool _refresh_next_frame         = false;
-    bool _ui_modal_active            = false;
-    bool _release_modal_next_frame   = false;
-    BoardVariant _board_variant      = BoardVariant::Lite;
-    bool _rgb_ready                  = false;
-    bool _buzzer_ready               = false;
-    bool _buzzer_muted               = false;
-    bool _tf_power_enabled           = false;
-    bool _mic_ready                  = false;
-    std::uint8_t _fast_refresh_count = 0;
+    bool _refresh_request                        = false;
+    bool _full_redraw_request                    = false;
+    bool _refresh_next_frame                     = false;
+    bool _ui_modal_active                        = false;
+    bool _release_modal_next_frame               = false;
+    m5gfx::epd_mode_t _full_redraw_mode          = m5gfx::epd_mode_t::epd_quality;
+    m5gfx::epd_mode_t _release_modal_redraw_mode = m5gfx::epd_mode_t::epd_quality;
+    m5gfx::epd_mode_t _next_frame_redraw_mode    = m5gfx::epd_mode_t::epd_quality;
+    BoardVariant _board_variant                  = BoardVariant::Lite;
+    bool _rgb_ready                              = false;
+    bool _buzzer_ready                           = false;
+    bool _buzzer_muted                           = false;
+    bool _tf_power_enabled                       = false;
+    bool _mic_ready                              = false;
+    std::uint8_t _local_refresh_count            = 0;
+    std::uint8_t _fast_refresh_count             = 0;
+    std::vector<m5gfx::grayscale_t> _display_snapshot;
+    std::int16_t _display_snapshot_w = 0;
+    std::int16_t _display_snapshot_h = 0;
+    bool _display_snapshot_valid     = false;
     QueueHandle_t _buzzer_queue      = nullptr;
     TaskHandle_t _buzzer_task        = nullptr;
     TfCardInfo _tf_card_info;

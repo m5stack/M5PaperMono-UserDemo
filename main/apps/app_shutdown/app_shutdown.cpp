@@ -18,7 +18,6 @@ static constexpr int SHUTDOWN_W = 473 - 366;
 static constexpr int SHUTDOWN_H = 475 - 434;
 
 static constexpr std::uint32_t SHUTDOWN_TOUCH_COOLDOWN_MS = 350;
-static constexpr std::uint32_t SHUTDOWN_IMAGE_HOLD_MS     = 250;
 static constexpr std::uint32_t SHUTDOWN_LOGO_HOLD_MS      = 250;
 
 static constexpr BuzzerTone SHUTDOWN_PRESS_TONES[] = {
@@ -62,38 +61,22 @@ void AppShutdown::onRunning()
         GetHAL().playBuzzerPattern(SHUTDOWN_PRESS_TONES,
                                    sizeof(SHUTDOWN_PRESS_TONES) / sizeof(SHUTDOWN_PRESS_TONES[0]));
 
-        drawShutdownPressed();
+        drawShutdownWhiteScreen();
+        drawShutdownLogo();
         enterShutdown();
         return;
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested()) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
         _has_drawn = true;
     }
 }
 
-void AppShutdown::drawShutdownPressed()
-{
-    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
-    GetHAL().display.drawPng(img_shutdown_start, img_shutdown_end - img_shutdown_start, SHUTDOWN_X, SHUTDOWN_Y);
-
-    if (!GetHAL().isRefreshRequested()) {
-        GetHAL().flushDisplay(SHUTDOWN_X, SHUTDOWN_Y, SHUTDOWN_W, SHUTDOWN_H);
-        GetHAL().display.waitDisplay();
-    }
-
-    _has_drawn = true;
-}
-
-void AppShutdown::drawShutdownCleanScreen()
+void AppShutdown::drawShutdownWhiteScreen()
 {
     auto& display = GetHAL().display;
 
     display.setEpdMode(m5gfx::epd_mode_t::epd_quality);
-    display.fillScreen(TFT_BLACK);
-    GetHAL().flushDisplay();
-    display.waitDisplay();
-
     display.fillScreen(TFT_WHITE);
     GetHAL().flushDisplay();
     display.waitDisplay();
@@ -118,8 +101,6 @@ void AppShutdown::enterShutdown()
     GetHAL().stopBuzzer();
     GetHAL().unmountTfCard();
 
-    vTaskDelay(pdMS_TO_TICKS(SHUTDOWN_IMAGE_HOLD_MS));
-
     std::uint32_t total_ms = 0;
     for (std::size_t i = 0; i < sizeof(SHUTDOWN_SINK_TONES) / sizeof(SHUTDOWN_SINK_TONES[0]); ++i) {
         total_ms += SHUTDOWN_SINK_TONES[i].duration_ms;
@@ -128,8 +109,6 @@ void AppShutdown::enterShutdown()
         }
     }
 
-    drawShutdownCleanScreen();
-    drawShutdownLogo();
     vTaskDelay(pdMS_TO_TICKS(SHUTDOWN_LOGO_HOLD_MS));
 
     GetHAL().playBuzzerPattern(SHUTDOWN_SINK_TONES, sizeof(SHUTDOWN_SINK_TONES) / sizeof(SHUTDOWN_SINK_TONES[0]));

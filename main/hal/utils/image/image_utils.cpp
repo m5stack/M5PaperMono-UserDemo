@@ -16,14 +16,14 @@ static bool get_bmp_size_mem(const std::uint8_t* data, std::size_t len, int* wid
         return false;
     }
 
-    const std::uint32_t width_u  = static_cast<std::uint32_t>(data[18]) | (static_cast<std::uint32_t>(data[19]) << 8) |
-                                   (static_cast<std::uint32_t>(data[20]) << 16) |
-                                   (static_cast<std::uint32_t>(data[21]) << 24);
+    const std::uint32_t width_u = static_cast<std::uint32_t>(data[18]) | (static_cast<std::uint32_t>(data[19]) << 8) |
+                                  (static_cast<std::uint32_t>(data[20]) << 16) |
+                                  (static_cast<std::uint32_t>(data[21]) << 24);
     const std::uint32_t height_u = static_cast<std::uint32_t>(data[22]) | (static_cast<std::uint32_t>(data[23]) << 8) |
                                    (static_cast<std::uint32_t>(data[24]) << 16) |
                                    (static_cast<std::uint32_t>(data[25]) << 24);
-    *width                       = static_cast<std::int32_t>(width_u);
-    *height                      = static_cast<std::int32_t>(height_u);
+    *width  = static_cast<std::int32_t>(width_u);
+    *height = static_cast<std::int32_t>(height_u);
     if (*height < 0) {
         *height = -*height;
     }

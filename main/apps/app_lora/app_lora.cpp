@@ -142,7 +142,7 @@ void AppLora::onRunning()
         GetHAL().playBuzzerPattern(LORA_TX_TICK_TONES, sizeof(LORA_TX_TICK_TONES) / sizeof(LORA_TX_TICK_TONES[0]));
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested()) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
         drawLora();
     }
 
@@ -187,7 +187,6 @@ void AppLora::drawReceive()
     display.clearClipRect();
 
     if (!GetHAL().isRefreshRequested()) {
-        GetHAL().prepareDisplayRefreshObservers();
         GetHAL().flushDisplay(LORA_RX_X + 2, LORA_RX_Y + 2, LORA_RX_W - 4, LORA_RX_H - 4);
         display.waitDisplay();
     }
@@ -207,7 +206,6 @@ void AppLora::drawInput(bool immediate_refresh)
     display.clearClipRect();
 
     if (immediate_refresh && !GetHAL().isRefreshRequested()) {
-        GetHAL().prepareDisplayRefreshObservers();
         GetHAL().flushDisplay(LORA_TX_X + 2, LORA_TX_Y + 2, LORA_TX_W - 4, LORA_TX_H - 4);
         display.waitDisplay();
     }
@@ -231,7 +229,7 @@ void AppLora::handleKeyboard()
         _tx_text = _keyboard.text();
         GetHAL().drawBackground(m5gfx::epd_mode_t::epd_fastest, false);
         _has_drawn = false;
-        GetHAL().releaseModalNextFrame();
+        GetHAL().releaseModalNextFrame(m5gfx::epd_mode_t::epd_fast);
     };
 
     const KeyboardEvent event = _keyboard.update(false);
@@ -256,7 +254,6 @@ void AppLora::handleKeyboard()
     _tx_text = _keyboard.text();
     drawInput(false);
     const int combined_y = std::min(LORA_TX_Y, _keyboard.refreshTop());
-    GetHAL().prepareDisplayRefreshObservers();
     GetHAL().flushDisplay(0, combined_y, GetHAL().display.width(), GetHAL().display.height() - combined_y);
     GetHAL().display.waitDisplay();
 }

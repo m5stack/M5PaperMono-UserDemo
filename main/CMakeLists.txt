@@ -3,6 +3,7 @@ set(APP_SRCS
     "./hal/hal_board.cpp"
     "./hal/hal_buzzer.cpp"
     "./hal/hal_display.cpp"
+    "./hal/hal_imu.cpp"
     "./hal/hal_lora.cpp"
     "./hal/hal_mic.cpp"
     "./hal/hal_tf_card.cpp"

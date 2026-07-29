@@ -30,7 +30,7 @@ private:
     std::string _current_title;
     std::string _browser_status;
     std::string _image_path;
-    std::vector<std::uint16_t> _image_clean_cache;
+    std::vector<m5gfx::grayscale_t> _image_clean_cache;
     std::uint32_t _last_touch_ms         = 0;
     std::uint32_t _last_card_check_ms    = 0;
     std::uint32_t _last_card_poll_ms     = 0;
@@ -59,7 +59,7 @@ private:
     bool ensureCardPresentForBrowser();
     void handleCardStatusSound(TfCardStatus status);
     bool loadDirectory(const std::string& path);
-    void drawBrowser();
+    void drawBrowser(bool fast_refresh = false);
     void handleBrowserTouch();
     void drawImageViewer(bool image_refresh);
     void handleImageViewerTouch();
@@ -67,6 +67,9 @@ private:
     void captureImageCleanCache();
     bool restoreImageCleanCache();
     void drawImageOverlay();
+    void drawImageOverlayHeader();
+    void drawImageOverlayFooter();
+    void refreshImageOverlay();
     bool switchImage(int direction);
     bool goParent();
 };

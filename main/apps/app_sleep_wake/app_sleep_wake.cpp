@@ -438,20 +438,19 @@ void AppSleepWake::onRunning()
         return;
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested()) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
         _has_drawn = true;
     }
 }
 
 void AppSleepWake::drawPressedImage(const std::uint8_t* start, const std::uint8_t* end, int x, int y, int w, int h)
 {
-    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
+    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fast);
     GetHAL().display.drawPng(start, end - start, x, y);
 
-    if (!GetHAL().isRefreshRequested()) {
-        GetHAL().flushDisplay(x, y, w, h);
-        GetHAL().display.waitDisplay();
-    }
+    GetHAL().flushDisplay(x, y, w, h);
+    GetHAL().display.waitDisplay();
+    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
 
     _has_drawn = true;
 }

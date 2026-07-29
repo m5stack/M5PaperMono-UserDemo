@@ -1,11 +1,11 @@
 # PaperMono User Demo
 
-### SKU: C153, C153-Lite
+### SKU: C153, C153-LITE
 
 ## Related Link
 
 - [C153 Document & Datasheet](https://docs.m5stack.com/en/products/sku/C153).
-- [C153-Lite Document & Datasheet](https://docs.m5stack.com/en/products/sku/C153-Lite).
+- [C153-LITE Document & Datasheet](https://docs.m5stack.com/en/products/sku/C153-LITE).
 
 This project is an ESP-IDF application for ESP32-S3R8 based PaperMono devices. It includes basic demos for display refresh, clock, battery status, brightness, IMU, microphone waveform, RGB LED, buzzer, Wi-Fi scan, NFC scan, LoRa, TF card, sleep/wake, and shutdown behavior.
 

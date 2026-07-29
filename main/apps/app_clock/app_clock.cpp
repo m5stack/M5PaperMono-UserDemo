@@ -501,36 +501,6 @@ void AppClock::scheduleNextAutoNtp(std::uint32_t delay_ms)
     _next_auto_ntp_ms = GetHAL().millis() + delay_ms;
 }
 
-void AppClock::captureNtpBackground()
-{
-    auto& display      = GetHAL().display;
-    const int screen_w = display.width();
-    const int screen_h = display.height();
-    if (screen_w <= 0 || screen_h <= 0) {
-        _ntp_background_valid = false;
-        return;
-    }
-
-    const std::size_t buffer_size = static_cast<std::size_t>(screen_w) * static_cast<std::size_t>(screen_h);
-    _ntp_background.resize(buffer_size);
-    display.readRect(0, 0, screen_w, screen_h, _ntp_background.data());
-    _ntp_background_w     = static_cast<std::int16_t>(screen_w);
-    _ntp_background_h     = static_cast<std::int16_t>(screen_h);
-    _ntp_background_valid = true;
-}
-
-void AppClock::restoreNtpBackground()
-{
-    if (!_ntp_background_valid || _ntp_background.empty()) {
-        GetHAL().drawBackground(m5gfx::epd_mode_t::epd_fastest, false);
-        return;
-    }
-
-    auto& display = GetHAL().display;
-    display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
-    display.pushImage(0, 0, _ntp_background_w, _ntp_background_h, _ntp_background.data());
-}
-
 /* -------------------------------------------------------------------------- */
 /*                                 Lifecycle                                  */
 /* -------------------------------------------------------------------------- */
@@ -594,7 +564,7 @@ void AppClock::onRunning()
         const auto timezone_date_time = convertRtcToTimezone(date_time, TIMEZONES[_timezone_index]);
         minute_changed                = makeDisplayMinuteKey(timezone_date_time) != _last_display_minute_key;
     }
-    if (!_has_drawn || GetHAL().isRefreshRequested() || minute_changed ||
+    if (!_has_drawn || GetHAL().isFullRedrawRequested() || minute_changed ||
         now_ms - _last_update_ms >= CLOCK_REFRESH_MS) {
         drawTime();
     }
@@ -606,7 +576,7 @@ void AppClock::onRunning()
 
 void AppClock::openNtpDialog()
 {
-    captureNtpBackground();
+    GetHAL().captureDisplaySnapshot();
     _ntp_dialog_open      = true;
     _ntp_scan_running     = false;
     _ntp_success_close_ms = 0;
@@ -619,7 +589,7 @@ void AppClock::openNtpDialog()
     WiFi.scanDelete();
     GetHAL().setUiModalActive(true);
     GetHAL().playBuzzerPattern(NTP_DIALOG_OPEN_TONES, 2);
-    drawNtpDialog();
+    drawNtpDialog(true);
 }
 
 void AppClock::closeNtpDialog()
@@ -635,13 +605,15 @@ void AppClock::closeNtpDialog()
     _ntp_touching         = false;
     _ntp_list_touching    = false;
     _ntp_list_dragged     = false;
-    restoreNtpBackground();
-    _has_drawn            = false;
-    _ntp_background_valid = false;
-    GetHAL().releaseModalNextFrame();
+    if (!GetHAL().restoreDisplaySnapshot()) {
+        GetHAL().drawBackground(m5gfx::epd_mode_t::epd_fast, false);
+    }
+    GetHAL().clearDisplaySnapshot();
+    _has_drawn = false;
+    GetHAL().releaseModalNextFrame(m5gfx::epd_mode_t::epd_fast);
 }
 
-void AppClock::drawNtpDialog()
+void AppClock::drawNtpDialog(bool full_refresh)
 {
     auto& display = GetHAL().display;
     display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
@@ -671,7 +643,7 @@ void AppClock::drawNtpDialog()
     display.drawString("AUTO TIME SYNC", NTP_FIELD_X, NTP_AUTO_Y + NTP_AUTO_H / 2);
     drawNtpToggle(_ntp_auto_enabled, NTP_AUTO_TOGGLE_X, NTP_AUTO_Y, NTP_AUTO_TOGGLE_W, NTP_AUTO_H);
 
-    drawNtpButton(_ntp_scan_running ? "SCANNING..." : "SCAN NETWORKS", NTP_SCAN_X, NTP_BUTTON_ROW_Y, NTP_ACTION_W,
+    drawNtpButton(_ntp_scan_running ? "SCANNING..." : "SCAN Wi-Fi", NTP_SCAN_X, NTP_BUTTON_ROW_Y, NTP_ACTION_W,
                   NTP_ACTION_H, _ntp_scan_running);
     drawNtpButton(_ntp_connecting || _ntp_syncing ? "SYNCING TIME" : "SYNC TIME", NTP_SYNC_X, NTP_BUTTON_ROW_Y,
                   NTP_ACTION_W, NTP_ACTION_H, _ntp_connecting || _ntp_syncing);
@@ -718,8 +690,10 @@ void AppClock::drawNtpDialog()
         }
     }
 
+    display.setEpdMode(full_refresh ? m5gfx::epd_mode_t::epd_fast : m5gfx::epd_mode_t::epd_fastest);
     GetHAL().flushDisplay(NTP_DIALOG_X, NTP_DIALOG_Y, NTP_DIALOG_W, NTP_DIALOG_H);
     display.waitDisplay();
+    display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
 }
 
 void AppClock::drawNtpInputFields()
@@ -757,10 +731,12 @@ void AppClock::handleNtpDialog()
     if (_keyboard.isOpen()) {
         auto closeKeyboardAndRedraw = [&]() {
             commitNtpKeyboard();
-            restoreNtpBackground();
+            if (!GetHAL().restoreDisplaySnapshot()) {
+                GetHAL().drawBackground(m5gfx::epd_mode_t::epd_fast, false);
+            }
             GetHAL().requestRefresh();
             drawTime();
-            drawNtpDialog();
+            drawNtpDialog(true);
         };
         auto switchKeyboardField = [&](std::uint8_t field) {
             if (_ntp_edit_field == field) {
@@ -845,10 +821,10 @@ void AppClock::handleNtpDialog()
     }
     _ntp_touching = false;
 
-    const int dx                 = point.x - _ntp_touch_start_x;
-    const int dy                 = point.y - _ntp_touch_start_y;
-    const bool started_in_list   = _ntp_touch_start_x >= NTP_LIST_X && _ntp_touch_start_x <= NTP_LIST_X + NTP_LIST_W &&
-                                   _ntp_touch_start_y >= NTP_LIST_Y && _ntp_touch_start_y < NTP_LIST_Y + list_h;
+    const int dx               = point.x - _ntp_touch_start_x;
+    const int dy               = point.y - _ntp_touch_start_y;
+    const bool started_in_list = _ntp_touch_start_x >= NTP_LIST_X && _ntp_touch_start_x <= NTP_LIST_X + NTP_LIST_W &&
+                                 _ntp_touch_start_y >= NTP_LIST_Y && _ntp_touch_start_y < NTP_LIST_Y + list_h;
     const bool is_vertical_swipe = started_in_list && std::abs(dy) >= NTP_LIST_ROW_H && std::abs(dy) > std::abs(dx);
     if (max_scroll > 0 && is_vertical_swipe) {
         const int old_scroll = _ntp_list_scroll;

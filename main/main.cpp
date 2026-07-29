@@ -13,12 +13,12 @@
 #include <mooncake.h>
 
 static constexpr const char* APP_TAG          = "PaperMono";
-static constexpr const char* FIRMWARE_VERSION = "V1.0";
+static constexpr const char* FIRMWARE_VERSION = "V1.1";
 
 static void drawStartupBackground()
 {
-    if (GetHAL().drawBackground(m5gfx::epd_mode_t::epd_quality, false)) {
-        GetHAL().requestRefresh();
+    if (GetHAL().drawBackground(m5gfx::epd_mode_t::epd_fast, false)) {
+        GetHAL().requestFullRedraw();
     }
 }
 
@@ -34,6 +34,9 @@ extern "C" void app_main(void)
             GetHAL().delay(1000);
         }
     }
+
+    // Build the complete startup frame in memory before the first panel update.
+    drawStartupBackground();
 
     mooncake::GetMooncake().installApp(std::make_unique<AppBrightness>());
     mooncake::GetMooncake().installApp(std::make_unique<AppClock>());
@@ -58,16 +61,30 @@ extern "C" void app_main(void)
     }
     mooncake::GetMooncake().installApp(std::make_unique<AppTfCard>());
 
-    drawStartupBackground();
+    // Drive every app through onCreate/onOpen so its initial data joins the
+    // background in the first panel update.
+    mooncake::GetMooncake().update();
+    GetHAL().prepareDisplayRefreshObservers();
+    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fast);
+    GetHAL().flushDisplay();
+    GetHAL().display.waitDisplay();
+    GetHAL().clearRefreshRequest();
+    GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
 
     while (true) {
         GetHAL().beginFrame();
         M5.update();
         mooncake::GetMooncake().update();
         if (GetHAL().isRefreshRequested()) {
-            GetHAL().prepareDisplayRefreshObservers();
+            if (GetHAL().isFullRedrawRequested()) {
+                GetHAL().prepareDisplayRefreshObservers();
+                GetHAL().display.setEpdMode(GetHAL().fullRedrawMode());
+            } else {
+                GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
+            }
             GetHAL().flushDisplay();
             GetHAL().display.waitDisplay();
+            GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
         }
         GetHAL().clearRefreshRequest();
         GetHAL().feedTheDog();

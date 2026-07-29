@@ -59,6 +59,7 @@ bool Hal::init()
     cfg.clear_display = false;
     cfg.internal_mic  = false;
     cfg.internal_spk  = false;
+    cfg.internal_imu  = false;
     ESP_LOGI(HAL_TAG, "M5.begin start");
     M5.begin(cfg);
     ESP_LOGI(HAL_TAG, "M5.begin done board=%d display_count=%d", static_cast<int>(M5.getBoard()),
@@ -84,6 +85,11 @@ bool Hal::init()
     } else {
         detectBoardVariant();
     }
+
+    if (!initImu()) {
+        ESP_LOGW(HAL_TAG, "IMU init failed");
+    }
+
     _buzzer_ready = initBuzzer();
     if (!_buzzer_ready) {
         ESP_LOGW(HAL_TAG, "Buzzer init failed");

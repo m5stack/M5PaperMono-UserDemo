@@ -433,7 +433,7 @@ void AppNfcScan::onRunning()
 
     const auto now_ms = GetHAL().millis();
     if (now_ms - _last_input_ms < NFC_TOUCH_COOLDOWN_MS) {
-        if (!_has_drawn || GetHAL().isRefreshRequested()) {
+        if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
             drawNfc();
         }
         return;
@@ -451,7 +451,7 @@ void AppNfcScan::onRunning()
         return;
     }
 
-    if (!_has_drawn || GetHAL().isRefreshRequested()) {
+    if (!_has_drawn || GetHAL().isFullRedrawRequested()) {
         drawNfc();
     }
 }
@@ -606,7 +606,6 @@ void AppNfcScan::drawNfc()
     }
 
     if (!GetHAL().isRefreshRequested()) {
-        GetHAL().prepareDisplayRefreshObservers();
         GetHAL().flushDisplay(NFC_INFO_X, NFC_INFO_Y, NFC_INFO_W, NFC_INFO_H);
         GetHAL().display.waitDisplay();
     }

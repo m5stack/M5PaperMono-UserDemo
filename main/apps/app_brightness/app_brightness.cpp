@@ -196,7 +196,7 @@ void AppBrightness::onRunning()
         GetHAL().requestRefresh();
     }
 
-    if (changed || !_has_drawn || GetHAL().isRefreshRequested()) {
+    if (changed || !_has_drawn || GetHAL().isFullRedrawRequested()) {
         drawBrightness();
     }
 }
