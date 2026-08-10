@@ -127,6 +127,7 @@ public:
     void flushDisplayFastOnce();
     void flushDisplay();
     void flushDisplay(int32_t x, int32_t y, int32_t w, int32_t h);
+    void powerSaveDisplay();
 
     /* ---------------------------------- Touch --------------------------------- */
     bool isTouchPressed();
@@ -142,6 +143,7 @@ public:
     bool isPreparingDisplayRefreshObservers() const;
     void releaseModalNextFrame(m5gfx::epd_mode_t mode = m5gfx::epd_mode_t::epd_quality);
     void beginFrame();
+    void endFrame();
     bool isRefreshRequested() const;
     bool isFullRedrawRequested() const;
     m5gfx::epd_mode_t fullRedrawMode() const;

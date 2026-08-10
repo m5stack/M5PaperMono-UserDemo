@@ -8,12 +8,89 @@
 #include <algorithm>
 #include <assets.h>
 
-static constexpr std::uint8_t LOCAL_REFRESH_FAST_REFRESH_THRESHOLD   = 10;
-static constexpr std::uint8_t FAST_REFRESH_QUALITY_REFRESH_THRESHOLD = 5;
-
 /* -------------------------------------------------------------------------- */
 /*                                   Display                                  */
 /* -------------------------------------------------------------------------- */
+static constexpr std::uint8_t LOCAL_REFRESH_FAST_REFRESH_THRESHOLD   = 10;
+static constexpr std::uint8_t FAST_REFRESH_QUALITY_REFRESH_THRESHOLD = 5;
+static constexpr bool DISPLAY_IDLE_POWER_SAVE_ENABLED                = true;
+static constexpr std::uint32_t DISPLAY_POWER_SAVE_IDLE_TIMEOUT_MS    = 500;
+static bool s_display_power_saving                                   = false;
+static bool s_display_power_save_pending                             = false;
+static bool s_display_epd_state_dirty                                = false;
+static std::uint32_t s_display_last_refresh_ms                       = 0;
+
+static bool isQualityRefresh(m5gfx::epd_mode_t mode)
+{
+    return mode == m5gfx::epd_mode_t::epd_quality || mode == m5gfx::epd_mode_t::epd_text;
+}
+
+static void setDisplayPowerSave(M5GFX& display, bool enable)
+{
+    display.waitDisplay();
+
+    // SSD1677 Display Update Control 2: 0x03 disables the analog supply and
+    // clock, while 0xC0 enables both. Master Activation (0x20) applies it.
+    display.startWrite(true);
+    display.writeCommand(0x22);
+    display.writeData(enable ? 0x03 : 0xC0);
+    display.writeCommand(0x20);
+    display.endWrite();
+    display.waitDisplay();
+
+    if (enable) {
+        s_display_epd_state_dirty = true;
+    }
+}
+
+static void powerSaveOffForRefresh(M5GFX& display)
+{
+    if (!DISPLAY_IDLE_POWER_SAVE_ENABLED || !s_display_power_saving) {
+        return;
+    }
+
+    setDisplayPowerSave(display, false);
+    s_display_power_saving = false;
+}
+
+static void prepareDisplayRefresh(M5GFX& display, m5gfx::epd_mode_t mode)
+{
+    if (s_display_epd_state_dirty && isQualityRefresh(mode)) {
+        // Use M5GFX only at this boundary so its retained 4-gray RAM state is
+        // invalidated before Quality/Text rebuilds a known controller face.
+        display.powerSaveOff();
+        s_display_power_saving    = false;
+        s_display_epd_state_dirty = false;
+        return;
+    }
+
+    powerSaveOffForRefresh(display);
+}
+
+static void markDisplayRefreshed(m5gfx::epd_mode_t mode)
+{
+    s_display_last_refresh_ms = m5gfx::millis();
+
+    // Quality/Text activation already turns the SSD1677 analog supply and
+    // clock off. Let M5GFX track that state and wake the panel on next refresh.
+    const bool driver_powered_down = isQualityRefresh(mode);
+    s_display_power_save_pending   = DISPLAY_IDLE_POWER_SAVE_ENABLED && !driver_powered_down;
+    if (driver_powered_down) {
+        s_display_power_saving = false;
+    }
+}
+
+void Hal::powerSaveDisplay()
+{
+    if (s_display_power_saving) {
+        return;
+    }
+
+    setDisplayPowerSave(display, true);
+    s_display_power_save_pending = false;
+    s_display_power_saving       = true;
+}
+
 bool Hal::drawBackground(m5gfx::epd_mode_t mode, bool flush)
 {
     display.setEpdMode(mode);
@@ -89,8 +166,10 @@ void Hal::flushDisplayFastOnce()
         _fast_refresh_count = 0;
     }
 
+    prepareDisplayRefresh(display, refresh_mode);
     display.setEpdMode(refresh_mode);
     display.display();
+    markDisplayRefreshed(refresh_mode);
     if (refresh_mode != saved_mode) {
         display.waitDisplay();
         display.setEpdMode(saved_mode);
@@ -116,7 +195,9 @@ void Hal::flushDisplay()
         _fast_refresh_count  = 0;
     }
 
+    prepareDisplayRefresh(display, mode);
     display.display();
+    markDisplayRefreshed(mode);
 }
 
 void Hal::flushDisplay(int32_t x, int32_t y, int32_t w, int32_t h)
@@ -138,7 +219,9 @@ void Hal::flushDisplay(int32_t x, int32_t y, int32_t w, int32_t h)
         _fast_refresh_count  = 0;
     }
 
+    prepareDisplayRefresh(display, mode);
     display.display(x, y, w, h);
+    markDisplayRefreshed(mode);
 }
 
 void Hal::requestRefresh()
@@ -217,6 +300,18 @@ void Hal::beginFrame()
         _refresh_next_frame = false;
         requestFullRedraw(_next_frame_redraw_mode);
     }
+}
+
+void Hal::endFrame()
+{
+    if (!DISPLAY_IDLE_POWER_SAVE_ENABLED || !s_display_power_save_pending) {
+        return;
+    }
+    if (m5gfx::millis() - s_display_last_refresh_ms < DISPLAY_POWER_SAVE_IDLE_TIMEOUT_MS) {
+        return;
+    }
+
+    powerSaveDisplay();
 }
 
 bool Hal::isRefreshRequested() const

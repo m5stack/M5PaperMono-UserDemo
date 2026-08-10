@@ -13,7 +13,7 @@
 #include <mooncake.h>
 
 static constexpr const char* APP_TAG          = "PaperMono";
-static constexpr const char* FIRMWARE_VERSION = "V1.1";
+static constexpr const char* FIRMWARE_VERSION = "V1.2";
 
 static void drawStartupBackground()
 {
@@ -70,6 +70,7 @@ extern "C" void app_main(void)
     GetHAL().display.waitDisplay();
     GetHAL().clearRefreshRequest();
     GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
+    GetHAL().endFrame();
 
     while (true) {
         GetHAL().beginFrame();
@@ -87,6 +88,7 @@ extern "C" void app_main(void)
             GetHAL().display.setEpdMode(m5gfx::epd_mode_t::epd_fastest);
         }
         GetHAL().clearRefreshRequest();
+        GetHAL().endFrame();
         GetHAL().feedTheDog();
     }
 }

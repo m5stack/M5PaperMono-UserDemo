@@ -533,6 +533,8 @@ void AppSleepWake::enterImuWakeShutdown()
     ESP_LOGI(APP_SLEEP_WAKE_TAG, "PM1 shutdown, wake by BMI270 INT1 -> PM1 G4 falling edge");
     vTaskDelay(pdMS_TO_TICKS(WAKE_IMAGE_HOLD_MS));
     playWakeToneAndWait(IMU_SLEEP_SINK_TONES, sizeof(IMU_SLEEP_SINK_TONES) / sizeof(IMU_SLEEP_SINK_TONES[0]));
+    GetHAL().powerSaveDisplay();
+    vTaskDelay(pdMS_TO_TICKS(100));
     checkPm1Result("PM1 shutdown", pm1.shutdown());
 }
 
@@ -730,5 +732,7 @@ void AppSleepWake::enterRtc10sWakeShutdown()
     ESP_LOGI(APP_SLEEP_WAKE_TAG, "PM1 shutdown, wake by RX8130 timer -> PM1 G0 falling edge");
     vTaskDelay(pdMS_TO_TICKS(WAKE_IMAGE_HOLD_MS));
     playWakeToneAndWait(RTC_SLEEP_SINK_TONES, sizeof(RTC_SLEEP_SINK_TONES) / sizeof(RTC_SLEEP_SINK_TONES[0]));
+    GetHAL().powerSaveDisplay();
+    vTaskDelay(pdMS_TO_TICKS(100));
     checkPm1Result("PM1 shutdown", pm1.shutdown());
 }
