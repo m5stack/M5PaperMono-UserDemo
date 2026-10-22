@@ -13,7 +13,7 @@
 #include <mooncake.h>
 
 static constexpr const char* APP_TAG          = "PaperMono";
-static constexpr const char* FIRMWARE_VERSION = "V1.2";
+static constexpr const char* FIRMWARE_VERSION = "V1.3";
 
 static void drawStartupBackground()
 {

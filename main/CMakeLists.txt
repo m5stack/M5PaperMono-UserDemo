@@ -9,6 +9,7 @@ set(APP_SRCS
     "./hal/hal_tf_card.cpp"
     "./hal/hal_touch.cpp"
     "./hal/utils/image/image_utils.cpp"
+    "./apps/app_battery/battery_soc.c"
     "./apps/app_battery/app_battery.cpp"
     "./apps/app_brightness/app_brightness.cpp"
     "./apps/app_buzzer/app_buzzer.cpp"
@@ -48,6 +49,10 @@ list(APPEND APP_EMBED_FILES
     assets/img_file.png
     assets/img_folder.png
     assets/img_picture.png
+    # file(GLOB) is evaluated only at CMake configure time, so a new image has to
+    # be listed explicitly here or no .S is generated and the link fails with
+    # undefined reference.
+    assets/img_charging.png
 )
 list(REMOVE_DUPLICATES APP_EMBED_FILES)
 

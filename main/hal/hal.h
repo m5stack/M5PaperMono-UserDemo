@@ -78,6 +78,14 @@ public:
     void feedTheDog();
     std::int16_t getBatteryVoltageMv();
 
+    /* Battery voltage sampled once right after M5.begin(), before the display,
+     * radio and the other peripherals are brought up. 0 when unavailable.
+     * Sampling this early avoids the boot-load voltage sag. */
+    std::int16_t bootBatteryVoltageMv() const
+    {
+        return _boot_battery_mv;
+    }
+
     /* ---------------------------------- Board --------------------------------- */
     BoardVariant boardVariant() const;
     bool isLiteModel() const;
@@ -178,6 +186,9 @@ private:
     /* ----------------------------------- IMU ---------------------------------- */
     bool initImu();
 
+    /* --------------------------------- System --------------------------------- */
+    void sampleBootBatteryVoltage();
+
     /* -------------------------------- Microphone ------------------------------- */
     bool setPdmPower(bool enable);
     int readPdmEnableLevel();
@@ -211,6 +222,7 @@ private:
     bool _mic_ready                              = false;
     std::uint8_t _local_refresh_count            = 0;
     std::uint8_t _fast_refresh_count             = 0;
+    std::int16_t _boot_battery_mv                = 0;
     std::vector<m5gfx::grayscale_t> _display_snapshot;
     std::int16_t _display_snapshot_w = 0;
     std::int16_t _display_snapshot_h = 0;

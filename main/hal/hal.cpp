@@ -79,6 +79,11 @@ bool Hal::init()
         return false;
     }
 
+    /* Sample the battery before the panel refresh, radio and the remaining
+     * peripherals are up: their load pulls the terminal voltage down and the
+     * boot-time SOC estimate would be far too low. */
+    sampleBootBatteryVoltage();
+
     _rgb_ready = initRgb();
     if (!_rgb_ready) {
         ESP_LOGW(HAL_TAG, "M5PM1/M5IOE1 init failed; RGB/NFC/TF controls are disabled");
@@ -114,6 +119,47 @@ std::uint32_t Hal::millis()
 std::int16_t Hal::getBatteryVoltageMv()
 {
     return M5.Power.getBatteryVoltage();
+}
+
+/* Median of a burst with spread rejection. Sampling this early sees the lowest
+ * load of the whole boot, but the reading still jitters by a few mV, and that
+ * jitter would be the anchor of the estimate. */
+void Hal::sampleBootBatteryVoltage()
+{
+    constexpr int kSamples     = 16;
+    constexpr int kMaxSpreadMv = 25;
+
+    int values[kSamples];
+    int valid = 0;
+    for (int i = 0; i < kSamples; ++i) {
+        const std::int16_t mv = M5.Power.getBatteryVoltage();
+        if (mv > 0) {
+            values[valid++] = mv;
+        }
+    }
+    if (valid == 0) {
+        _boot_battery_mv = 0;
+        ESP_LOGW(HAL_TAG, "Boot battery voltage: no valid samples");
+        return;
+    }
+
+    /* Insertion sort; the array is small. */
+    for (int i = 1; i < valid; ++i) {
+        const int key = values[i];
+        int j         = i - 1;
+        while (j >= 0 && values[j] > key) {
+            values[j + 1] = values[j];
+            --j;
+        }
+        values[j + 1] = key;
+    }
+
+    if (values[valid - 1] - values[0] > kMaxSpreadMv) {
+        ESP_LOGW(HAL_TAG, "Boot battery voltage: spread %d mV over %d samples", values[valid - 1] - values[0], valid);
+    }
+    _boot_battery_mv = static_cast<std::int16_t>(values[valid / 2]);
+    ESP_LOGI(HAL_TAG, "Boot battery voltage: %d mV (median of %d, range %d..%d)", _boot_battery_mv, valid, values[0],
+             values[valid - 1]);
 }
 
 void Hal::feedTheDog()

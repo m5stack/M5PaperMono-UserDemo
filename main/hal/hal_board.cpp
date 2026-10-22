@@ -43,6 +43,20 @@ static void clearPm1WakeIrqState(M5PM1& pm1)
     pm1.gpioSetWakeEnable(M5PM1_GPIO_NUM_4, false);
 }
 
+/* Enable single-click reset and double-click power-off after a PM1 reset. */
+static void restorePm1ButtonFunctions(M5PM1& pm1)
+{
+    const auto reset_err = pm1.setSingleResetDisable(false);
+    if (reset_err != M5PM1_OK) {
+        ESP_LOGW(HAL_TAG, "Enable single-click reset failed: %d", static_cast<int>(reset_err));
+    }
+
+    const auto off_err = pm1.setDoubleOffDisable(false);
+    if (off_err != M5PM1_OK) {
+        ESP_LOGW(HAL_TAG, "Enable double-click power-off failed: %d", static_cast<int>(off_err));
+    }
+}
+
 bool Hal::initRgb()
 {
     M5PM1::setLogLevel(M5PM1_LOG_LEVEL_INFO);
@@ -68,6 +82,7 @@ bool Hal::initRgb()
 
         power_ok = true;
         clearPm1WakeIrqState(pm1);
+        restorePm1ButtonFunctions(pm1);
         break;
     }
 

@@ -33,3 +33,5 @@ extern const uint8_t img_SLEEP_10Sec_WAKE_ON_start[] asm("_binary_img_SLEEP_10Se
 extern const uint8_t img_SLEEP_10Sec_WAKE_ON_end[] asm("_binary_img_SLEEP_10Sec_WAKE_ON_png_end");
 extern const uint8_t img_shutdown_start[] asm("_binary_img_shutdown_png_start");
 extern const uint8_t img_shutdown_end[] asm("_binary_img_shutdown_png_end");
+extern const uint8_t img_charging_start[] asm("_binary_img_charging_png_start");
+extern const uint8_t img_charging_end[] asm("_binary_img_charging_png_end");
